@@ -18,7 +18,7 @@ suppressMessages(
    library(tidyverse)
 )
 
-kaggle_survey_raw <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/kaggle-survey-2017/multipleChoiceResponses.csv")
+kaggle_survey_raw <- read_csv("https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/kaggle-survey-2017/multipleChoiceResponses.csv")
 
 ```
 
