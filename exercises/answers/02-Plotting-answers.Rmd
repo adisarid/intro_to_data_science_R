@@ -25,7 +25,7 @@ In this exercise we will work with a file downloaded from the competition websit
 suppressMessages(
    library(tidyverse)
    )
-google_play_raw <- read_csv(file = "https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/googleplaystore.csv")
+google_play_raw <- read_csv(file = "https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/googleplaystore.csv")
 
 ```
 
