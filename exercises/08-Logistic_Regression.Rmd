@@ -53,7 +53,7 @@ To run a logistic regression model we just have to put small modification to the
 library(tidyverse)
 
 # read the no show data of patients
-appointments <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
+appointments <- read_csv("https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
   mutate(no_show = `No-show` == "Yes") # change the Yes/No into True/False (which is like having 1-0)
 
 # split to train and test set
