@@ -77,7 +77,7 @@ In this exercise we will study patient data, and try to cluster different patien
 The data set can be read from the git repository. The following code will read the data and prepare the file for work.
 
 ```{r read no show data}
-appointments <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>% 
+appointments <- read_csv("https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>% 
    select(Gender, Age, Scholarship:`No-show`) %>% 
   mutate(Handcap = (Handcap >= 1)*1) %>% 
   mutate(no_show = `No-show` == "Yes")
