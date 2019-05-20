@@ -76,6 +76,12 @@ prp(diamond_price_pruned)
 
 ```
 
+What prunning does for a specific complexity parameter $\alpha$ is to find the tree which minimizes:
+
+\[
+R_\alpha(T)=R(T) + \alpha\left|T\right|
+\]
+
 ## Using cross-validation to choose the complexity parameter
 
 To choose CP, one can use cross-validation, what cross validation does is:
