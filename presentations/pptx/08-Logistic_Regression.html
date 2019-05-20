@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -396,26 +396,26 @@ $(document).ready(function () {
 <p><span class="math display">\[p(X)=\frac{e^{\beta_0 + \beta_1 X_1 + \ldots + \beta_p x_p}}{1 + e^{\beta_0 + \beta_1 X_1 + \ldots + \beta_p x_p}}\]</span></p>
 <p>The expression in the power of <span class="math inline">\(e\)</span> is linear and very similar to what we used in linear regression.</p>
 </div>
-<div id="odds-ration" class="section level2">
-<h2>Odds ration</h2>
+<div id="odds-ratio" class="section level2">
+<h2>Odds ratio</h2>
 <p>Another important term is odds ratio. In sport gambles it is widely common to see the ratio of winning against losing (“this hourse is a bet of 10 to 1”), in our formulation this becomes:</p>
 <p><span class="math display">\[\frac{p(X)}{1-p(X)} = e^{\beta_0 + \beta_1 X_1 + \ldots}\]</span></p>
 <p>This emphasizes the meaning of the <span class="math inline">\(\beta\)</span> coefficients in logistic regression. If in linear regression they were used to measure the influence of a unit’s change in <span class="math inline">\(X\)</span> on the dependent variable <span class="math inline">\(y\)</span>, here in logistic regression it shows by how much the odds ration increases (multiplies) when a single unit of <span class="math inline">\(X\)</span> is added.</p>
 <p>To compute the values of <span class="math inline">\(\beta\)</span> a mximum likelihood method is used, but we will not focus on the math here.</p>
 <p>To run a logistic regression model we just have to put small modification to the already familiar <code>lm</code> command, mainly use <code>glm</code> instead:</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## -- Attaching packages ---------------------------------------------------------------------------------- tidyverse 1.2.1 --</code></pre>
+<pre><code>## -- Attaching packages ------------------------------------------------------------------------ tidyverse 1.2.1 --</code></pre>
 <pre><code>## &lt;U+221A&gt; ggplot2 3.1.0       &lt;U+221A&gt; purrr   0.2.5  
 ## &lt;U+221A&gt; tibble  2.0.1       &lt;U+221A&gt; dplyr   0.8.0.1
 ## &lt;U+221A&gt; tidyr   0.8.3       &lt;U+221A&gt; stringr 1.3.1  
 ## &lt;U+221A&gt; readr   1.3.1       &lt;U+221A&gt; forcats 0.3.0</code></pre>
 <pre><code>## Warning: package &#39;tidyr&#39; was built under R version 3.5.3</code></pre>
 <pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.5.3</code></pre>
-<pre><code>## -- Conflicts ------------------------------------------------------------------------------------- tidyverse_conflicts() --
+<pre><code>## -- Conflicts --------------------------------------------------------------------------- tidyverse_conflicts() --
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code># read the no show data of patients
-appointments &lt;- read_csv(&quot;https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv&quot;) %&gt;%
+appointments &lt;- read_csv(&quot;https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv&quot;) %&gt;%
   mutate(no_show = `No-show` == &quot;Yes&quot;) # change the Yes/No into True/False (which is like having 1-0)</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
@@ -454,27 +454,27 @@ summary(appointments_model)</code></pre>
 ## 
 ## Deviance Residuals: 
 ##     Min       1Q   Median       3Q      Max  
-## -0.9598  -0.6795  -0.6062  -0.5318   2.1133  
+## -0.9652  -0.6820  -0.6070  -0.5356   2.1039  
 ## 
 ## Coefficients:
 ##                Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)  -1.3733113  0.0196409 -69.921  &lt; 2e-16 ***
-## GenderM      -0.0151067  0.0182120  -0.829   0.4068    
-## Age          -0.0070833  0.0004396 -16.113  &lt; 2e-16 ***
-## Scholarship   0.1805746  0.0273805   6.595 4.25e-11 ***
-## Hipertension -0.0499923  0.0275249  -1.816   0.0693 .  
-## Diabetes      0.0772679  0.0381770   2.024   0.0430 *  
-## Alcoholism    0.1342686  0.0501332   2.678   0.0074 ** 
-## Handcap       0.0682631  0.0531034   1.285   0.1986    
-## SMS_received  0.6567114  0.0173028  37.954  &lt; 2e-16 ***
+## (Intercept)  -1.3829744  0.0196638 -70.331  &lt; 2e-16 ***
+## GenderM      -0.0112863  0.0182023  -0.620   0.5352    
+## Age          -0.0065720  0.0004382 -14.998  &lt; 2e-16 ***
+## Scholarship   0.1899526  0.0274348   6.924  4.4e-12 ***
+## Hipertension -0.0655441  0.0274281  -2.390   0.0169 *  
+## Diabetes      0.0761867  0.0381913   1.995   0.0461 *  
+## Alcoholism    0.0982726  0.0503916   1.950   0.0512 .  
+## Handcap       0.0751885  0.0534891   1.406   0.1598    
+## SMS_received  0.6453972  0.0173111  37.282  &lt; 2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 88945  on 88409  degrees of freedom
-## Residual deviance: 87112  on 88401  degrees of freedom
-## AIC: 87130
+##     Null deviance: 88935  on 88363  degrees of freedom
+## Residual deviance: 87183  on 88355  degrees of freedom
+## AIC: 87201
 ## 
 ## Number of Fisher Scoring iterations: 4</code></pre>
 <p>The results are displayed in a very similar manner to what we have already seen:</p>
@@ -485,18 +485,18 @@ summary(appointments_model)</code></pre>
 <p>We can access the coefficients like this:</p>
 <pre class="r"><code>exp(appointments_model$coefficients)</code></pre>
 <pre><code>##  (Intercept)      GenderM          Age  Scholarship Hipertension 
-##    0.2532669    0.9850069    0.9929417    1.1979054    0.9512367 
+##    0.2508314    0.9887771    0.9934496    1.2091923    0.9365577 
 ##     Diabetes   Alcoholism      Handcap SMS_received 
-##    1.0803315    1.1437000    1.0706470    1.9284400</code></pre>
+##    1.0791641    1.1032635    1.0780873    1.9067442</code></pre>
 <p>The R-Square we used in linear regression is now replaced by the AIC (the Akaike criteria). The lower Akaike, the better the model is. Similarly, the residuals are replaced with deviance.</p>
 <p>As in the linear regression, we also get a statistical test for the hypothesis that the coefficients are non-zero.</p>
 <hr />
 </div>
 <div id="exercise" class="section level2">
 <h2>Exercise</h2>
-<p>The function <code>MASS:stepAIC</code> uses a “step-wise” algorithm to search for model improvements. In each step it tries to remove (or add) variables, and reach a better model.</p>
+<p>The function <code>MASS::stepAIC</code> uses a “step-wise” algorithm to search for model improvements. In each step it tries to remove (or add) variables, and reach a better model.</p>
 <ol style="list-style-type: decimal">
-<li>Try to improve the previous model by adding or removing variables, you can use <code>MASS:stepAIC</code>.</li>
+<li>Try to improve the previous model by adding or removing variables, you can use <code>MASS::stepAIC</code>.</li>
 <li>Using a boxplot, show the results of the logistic regression model (probabilities between 0-1 on the y-axis) versus the actual no-show value. You can use the following code:</li>
 </ol>
 <pre><code># use the help of ?predict.glm to understand what do you need to put in the type argument
