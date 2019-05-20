@@ -182,7 +182,7 @@ Load the medical appointments file, and split it to two parts randomely (train 8
 library(FNN)
 
 # Load the file from the csv
-appointments_raw <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv")
+appointments_raw <- read_csv("https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv")
 appointments <- appointments_raw %>%
   mutate(is_train = runif(nrow(appointments_raw)) <= 0.8) %>%
   mutate(schedule_time = lubridate::hour(ScheduledDay)) %>%
