@@ -92,7 +92,7 @@ ggplot(as_tibble(iris_pca$x) %>%
 באפשרותכם להיעזר בקוד הבא:
 
 ```
-appointments <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
+appointments <- read_csv("https://raw.githubusercontent.com/adisarid/intro_to_data_science_R/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
   mutate(no_show = `No-show` == "Yes")
 
 appointments_pca_all <- prcomp(appointments %>% 
