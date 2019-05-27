@@ -1,0 +1,223 @@
+---
+title: "12-PCA_and_Clustering"
+author: "עדי שריד / adi@sarid-ins.co.il"
+output: html_document
+---
+```{css, echo=FALSE}
+p, h1, h2, h3, h4, ul, ol {
+  direction: rtl;
+}
+```
+
+עד כה בקורס עסקנו בקשר שבין משתנים מסבירים ($X_1,\ldots,X_p$) לבין משתנה תלוי $y$, ואיך מייצרים מודלים שונים שמתארים את הקשר שביניהם (בין אם מודלי רגרסיה, או מודלים מתקדמים יותר).
+
+לעיתים הבעיה הניצבת בפנינו כחוקרים היא לא לתאר קשר בין משתנה תלוי למשתנים בלתי תלויים, אלא ללמוד על מבני הנתונים מתוך משתנים בלתי תלויים. לדוגמה:
+
+   * אילו קבוצות קיימות? כיצד ניתן לקבץ תצפיות שונות יחדיו? איזו תצפית דומה לאחרות?
+   * מה הקשר בין משתנים שונים? אילו משתנים הם מיותרים בתיאור מבנה הנתונים ואילו הכרחיים?
+
+בגנטיקה של אוכלוסיות לדוגמה, עוסקים בדיוק בבעיות כאלו: כיצד לסווג מינים שונים או כיצד להבין ממחקר גנטי על הקשר ההיסטורי שבין אוכלוסיות שונות. במקרה הבא, הגדרה של שני משתנים בלבד (PC1, PC2) מצליחה להפריד חלק מהאוכלוסיות באופן טוב, שדי מזכיר את מפת אירופה.
+![PCA used in genetic studies](genetics_pca.png)
+[https://stats.stackexchange.com/questions/8777/in-genome-wide-association-studies-what-are-principal-components](https://stats.stackexchange.com/questions/8777/in-genome-wide-association-studies-what-are-principal-components)
+
+המפה מתארת איך ממגוון משתנים המתארים שינויים גנטיים, ניתן לחלץ שני משתנים בלבד המסבירים את מירב השונות בין אנשים שונים, ואת הדימיון הרב המתקבל בין משתנים אלו לבין מפת הפיזור של האנשים באירופה.
+
+המינים הבאים סווגו לפי מידת הקרבה שלהן אחד לשני, בתרשים שנקרא Dendrogram. התרשים מסודר כעץ שבו ענפים כאשר ענפים סמוכים הם תצפיות שיש ביניהן דמיון.
+![Clustering of species](Dendrogram-showing-the-genetic-diversity-of-the-genomic-selection-training-population.png)
+[https://www.researchgate.net/figure/Dendrogram-showing-the-genetic-diversity-of-the-genomic-selection-training-population_fig2_317632929](https://www.researchgate.net/figure/Dendrogram-showing-the-genetic-diversity-of-the-genomic-selection-training-population_fig2_317632929)
+
+סוג הניתוחים הללו רלוונטי למקרים בהם אנחנו מנסים לפענח כיצד פרטים שונים מתקבצים יחדיו באוכלוסיה (Clustering) או כיצד משתנים שונים "מתנהגים" בהשוואה אחד לשני (Principle Component Analysis). 
+
+שימו לב שיש הבדל מהותי בין יצירת אשכולות - המתייחס לפרטים שונים באוכלוסיה (תצפיות) לבין ניתוח גורמים (המתייחס למשתנים עצמם).
+
+הרבה פעמים נשתמש בכלים אלו של unsupervised learning, כשלב ביניים לפני שנעבור למידול supervised.
+
+נדון ראשית בניתוח גורמים (Principle Component Analysis - PCA).
+
+## ניתוח גורמים / Principle Component Analysis
+
+בניתוח מסוג PCA, אנחנו משתמשים בכלים של אלגברה לינארית כדי לסובב ולהזיז את מערכת הצירים של הנתונים. הזזה זו מתבצעת באופן כזה, שבו מערכת הצירים החדשה היא מערכת צירים שבה הציר הראשון הוא בעל השונות הגבוהה ביותר, הציר השני בעל שונות פחות גבוהה וכן הלאה (הכוונה לפיזור הנתונים בכל ציר חדש).
+
+אם אנחנו בוחרים תת-קבוצה של צירים אלו, המשמעות היא שאנחנו בוחרים תת-קבוצה שמסבירה "X% מהשונות שיש בנתונים".
+
+```{r iris pca example, messages=FALSE, warning=FALSE, fig.width=5, fig.height=3}
+library(tidyverse)
+
+# lets try to reduce the dimension of the iris dataset
+ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) + geom_point()
+ggplot(iris, aes(Sepal.Length, Petal.Length, color = Species)) + geom_point()
+ggplot(iris, aes(Sepal.Length, Petal.Width, color = Species)) + geom_point()
+ggplot(iris, aes(Sepal.Width, Petal.Width, color = Species)) + geom_point()
+ggplot(iris, aes(Sepal.Width, Petal.Length, color = Species)) + geom_point()
+ggplot(iris, aes(Petal.Length, Petal.Width, color = Species)) + geom_point()
+
+# It looks like every two axis have their interaction (or not)
+# Some are very correlated, for example the Petal.Width and Petal.Length seem to have a very strong linear relationship.
+# To a lesser extent, the same can be said for Petal.Length<->Sepal.Length, and Petal.Width<->Sepal.Length
+
+# Now, lets run the PCA
+iris_pca <- prcomp(iris %>% select(-Species))
+iris_pca
+
+```
+
+הפקודה מדווחת לנו על ארבעה רכיבים (תמיד מספר הרכיבים יהיה כמספר המשתנים הכללי שהכנסנו, במקרה זה ארבע משתנים).
+
+כל משתנה מקבל "מקדם" שהוא המקדם שבו צריך להכפיל את המשתנה בשביל לקבל את ערך הרכיב החדש, הסכום שלהם הוא הרכיב החדש. לפעמים ניתן לתת פרשנות לרכיב החדש (כמעין ממוצע משוקלל), ולפעמים לא. הרבה פעמים התוצר של PCA הוא פשוט "קופסה שחורה".
+
+כאשר משתמשים בפקודת `summary` על אובייקט PCA, מקבלים את השונות של כל משתנה חדש, ואת שיעור השונות המוסברת (שלו והמצטברת).
+
+```{r pca summary}
+summary(iris_pca)
+
+# the following matrix contains the variables after they were rotated by the PCA
+head(iris_pca$x)
+
+# to rotate new data, just use the standard predict form
+predict(object = iris_pca, newdata = iris %>% slice(1:5))
+# `slice` selects the rows 1:5
+ggplot(as_tibble(iris_pca$x) %>%
+         mutate(Species = iris$Species), aes(x = PC1, y = PC2, color = Species)) + 
+  geom_point() + 
+  coord_equal() + 
+  ggtitle("The first two components of PCA on the iris dataset")
+
+```
+
+שימו לב לטווחים של ציר ה-PC1 לעומת הטווחים של ציר ה-PC2.
+
+לעיתים, שלב ה-PCA מהווה שלב מקדים בשביל לבנות רגרסיה,  והמשתנים המסבירים ברגרסיה הופכים להיות חלק מה-PCs.
+
+
+***
+
+### תרגיל PCA
+
+   1. קראו את נתוני המטופלים (קובץ נטישת מטופלים), ובצעו PCA על כל המשתנים שהם משתני 0-1 (לא כולל משתנה הנטישה).
+   2. כמה משתנים צריך בשביל להסביר 80% מהשונות שבנתונים? (כמה רכיבי PC).
+   3. בצעו PCA שוב, והפעם כללו גם את משתנה הגיל. מה ההשפעה של הוספת המשתנה לתוצאת ה-PCA?
+   4. לפקודת PCA ישנם שני פרמטרים: scale. ו-center. פרמטרים אלו "מכינים" את הנתונים לפני ביצוע ה-PCA על ידי מרכוז ונרמול. הריצו שוב את פקודת ה-PCA כולל שימוש במרכוז ונרמול של המשתנים. האם קיבלתם תוצאה שונה? כיצד אתם מסבירים זאת?
+   5. בנו מודל רגרסיה לוגיסטית המבוסס על הרכיבים החדשים, וחוזה את אי-ההגעה לפגישה. השוו בין מודל זה, לבין המודל המקורי (ללא PCA). מהם ביצוע המודל המבוסס על PCA לעומת המודל ללא PCA?
+
+באפשרותכם להיעזר בקוד הבא:
+
+```
+appointments <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
+  mutate(no_show = `No-show` == "Yes")
+
+appointments_pca_all <- prcomp(appointments %>% 
+                                 select(XXX),
+                               XXX = XXX, XXX = XXX)
+summary(appointments_pca_all)
+
+# Add the results of PCA as new variables into a dataset
+appointments_dataset_pca <- appointments %>% 
+  bind_cols(as_tibble(appointments_pca_all$x))
+
+# Try various options of # of PCs. When can you say that a smaller number of variables achieves similar results to using the full 7 variables?
+appointments_pcaX_glm <- glm(formula = 
+                            no_show ~ PC1 + PC2 + ... + PCX,
+                          family = binomial,
+                          data = appointments_dataset_pca %>% filter(is_train))
+
+# To examine performance you can either look at the residuals or visualize using an ROC...
+
+```
+
+
+```{r pca exercise, include = FALSE}
+
+# Read the data
+appointments <- read_csv("https://raw.githubusercontent.com/adisarid/Riskified_training/master/datasets/Medical_Appointments_No_Shows_KaggleV2-May-2016.csv") %>%
+  mutate(no_show = `No-show` == "Yes") # change the Yes/No into True/False (which is like having 1-0)
+# split to train and test set
+appointments <- appointments %>%
+  mutate(is_train = runif(NROW(appointments)) <= 0.8)
+# build the logistic regression model
+appointments_model <- glm(formula = 
+                            no_show ~ Age + Scholarship + Hipertension + Diabetes +
+                            Alcoholism + Handcap + SMS_received,
+                          family = binomial,
+                          data = appointments %>% filter(is_train))
+
+# Now with PCA
+appointments_pca <- prcomp(appointments %>% select(Scholarship, Hipertension, Diabetes, Alcoholism,
+                                                   Handcap, SMS_received),
+                           scale. = TRUE, center = TRUE)
+summary(appointments_pca)
+
+# PCA which includes age
+# WRONG (no scaling no centering)
+appointments_pca_wrong <- prcomp(appointments %>% 
+                                 select(Scholarship, Hipertension, Diabetes, Alcoholism,
+                                        Handcap, SMS_received, Age),
+                               scale. = FALSE, center = FALSE)
+appointments_pca_wrong$rotation
+summary(appointments_pca_wrong)
+
+# RIGHT (with scaling and centering)
+appointments_pca_all <- prcomp(appointments %>% 
+                                 select(Scholarship, Hipertension, Diabetes, Alcoholism,
+                                        Handcap, SMS_received, Age),
+                               scale. = TRUE, center = TRUE)
+summary(appointments_pca_all)
+appointments_pca_all$rotation
+
+# now, adding the logistic regression based on 5 PCs
+appointments_dataset_pca <- appointments %>% 
+  bind_cols(as_tibble(appointments_pca_all$x))
+
+appointments_pca5_glm <- glm(formula = 
+                            no_show ~ PC1 + PC2 + PC3 + PC4 + PC5,
+                          family = binomial,
+                          data = appointments_dataset_pca %>% filter(is_train))
+appointments_pca2_glm <- glm(formula = 
+                            no_show ~ PC1 + PC2,
+                          family = binomial,
+                          data = appointments_dataset_pca %>% filter(is_train))
+
+final_predictions <- appointments %>%
+  mutate(nominal_model_pred = predict(appointments_model, 
+                                      newdata = appointments, 
+                                      type = "response"),
+         pca5_model_pred = predict(appointments_pca5_glm, 
+                                  newdata = appointments_dataset_pca, 
+                                  type = "response"),
+         pca2_model_pred = predict(appointments_pca2_glm, 
+                                  newdata = appointments_dataset_pca, 
+                                  type = "response"))
+
+pca_model_roc <- final_predictions %>%
+  filter(!is_train) %>%
+  arrange(desc(pca5_model_pred)) %>%
+  mutate(tpr=cumsum(no_show)/sum(no_show),
+         fpr=cumsum(!no_show)/sum(!no_show)) %>%
+  mutate(model = "glm based on PCA5") %>%
+  bind_rows(
+    final_predictions %>%
+    filter(!is_train) %>%
+    arrange(desc(nominal_model_pred)) %>%
+    mutate(tpr=cumsum(no_show)/sum(no_show),
+           fpr=cumsum(!no_show)/sum(!no_show)) %>%
+    mutate(model = "glm without PCA")
+  ) %>%
+  bind_rows(
+    final_predictions %>%
+    filter(!is_train) %>%
+    arrange(desc(pca2_model_pred)) %>%
+    mutate(tpr=cumsum(no_show)/sum(no_show),
+           fpr=cumsum(!no_show)/sum(!no_show)) %>%
+    mutate(model = "glm based on PCA2")
+  )
+
+# An ROC illustrating the differences
+ggplot(pca_model_roc, aes(x = fpr, y = tpr, color = model)) + 
+  geom_line() + 
+  geom_abline(intercept = 0, slope = 1) + 
+  ggtitle("An ROC illustrating the influence of combining PCA with logistic regression.",
+          subtitle = "Three options shown: original (7 variables), 2 PCs, and 5 PCs")
+
+
+```
+
+***
