@@ -313,7 +313,7 @@ First, for the logo you must install the `rsvg` packages (`install.packages("rsv
 
 ```
 #install.packages("rsvg")
-riskified_logo <- rsvg::rsvg("https://3syq88kbbdj40jbkf2ssy21e-wpengine.netdna-ssl.com/wp-content/themes/riskified/images/logo.svg")
+img_logo <- rsvg::rsvg("???")
 
 ggplot(mtcars, aes(x = disp, y = mpg)) + 
    geom_point(aes(size = hp, color = factor(gear))) + 
@@ -322,7 +322,7 @@ ggplot(mtcars, aes(x = disp, y = mpg)) +
    labs(caption = "???") + 
    theme_??()
 
-grid::grid.raster(riskified_logo, x = 0.07, y = 0.03, just = c("left", "bottom"), width = unit(0.7, 'inches'))
+grid::grid.raster(img_logo, x = 0.07, y = 0.03, just = c("left", "bottom"), width = unit(0.7, 'inches'))
 ```
 
 **Chart 2:** Now, we will do the same but to a different chart.
