@@ -1,0 +1,275 @@
+---
+title: "Linear regression simple example"
+author: "Adi Sarid"
+date: "July 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Read the dataset
+
+We're using a data set with countries and the various types of alchohol consumption. The dataset was downloaded from the [tidytuesday project](https://github.com/rfordatascience/tidytuesday), the data set from Tuesday the 26th, 2018.
+
+We also add some country metadata from the [worldbank](https://data.worldbank.org/) and classification to continents from [here](https://datahub.io/JohnSnowLabs/country-and-continent-codes-list#data), then filtered some countries with missing data.
+
+```{r read alchohol data}
+alchohol <- read_csv("https://github.com/sarid-ins/statistical_learning_course/raw/master/datasets/alchohol_consumption/alchohol_consumption_ready.csv") %>% 
+  distinct(country, .keep_all = T)
+
+```
+
+## The beer model
+
+How much beer is drank, as a function of spirit, wine, gdp per capita, and continent?
+Beer, spirit, and wine data for 2010, servings consumed per person, see [fivethirtyeight](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/).
+
+```{r the beer model}
+
+beer_lm <- lm(beer_servings ~ spirit_servings + wine_servings + gdp2010 + Continent_Name,
+              data = alchohol)
+
+summary(beer_lm)
+
+```
+
+Let's analyze this model, step-by-step.
+
+### The `Call:`
+
+First, the `Call:` simply repeats what we "ordered".
+
+### Residuals
+
+The residuals provide the individual errors, i.e. the elements of the RSS (residual sum of squares).
+
+***
+
+**Question: what is the average of the residuals?**
+
+***
+
+Usually what we love to see is that the residuals are evenly distributed around $y=0$, with a similar variance along the $x$ axis, however this is not necessarily the case here. E.g., see how the variance decreases in the "wine servings" variable?
+
+No matter, we can still make do.
+
+```{r}
+alchohol_residuals <- alchohol %>% 
+         mutate(res = beer_lm$residuals) %>% 
+         select(country, spirit_servings:wine_servings, res) %>% 
+         gather(variable, x_value, -res, -country)
+
+ggplot(alchohol_residuals,
+       aes(x = x_value, y = res)) + 
+  geom_point() + 
+  facet_wrap(~ variable) + 
+  theme_bw() + 
+  ylab("Residual") + 
+  xlab("Number of servings")
+```
+
+By sorting the residuals, we can see where the model overshoots or undershoots, i.e., the 10 farthest predictions.
+```{r overshoot undeshoot}
+alchohol %>% 
+  mutate(res = beer_lm$residuals) %>%
+  select(country, spirit_servings:wine_servings, res) %>% 
+  arrange(desc(res)) %>% 
+  head() %>% 
+  knitr::kable()
+```
+
+### The regression table
+
+Enough about residuals, let's talk about the coefficients table. The `(intercept)` represents the model's $\beta_0$. The rest of the coefficients, as specified. 
+
+   * `Estimate` is the $\beta$ itself. 
+   * `Std. Error` is the estimate's variance (e.g., if we do this "measurement survey" again, and again, we might get some variations of the data. For each such variation we will get a different $\hat{\beta_i}$'s. These coefficients have a distribution, and this is an estimate to their standard error.
+   * The `t value` and the `Pr(>|t|)` (a.k.a., p-value) are significance tests based on the normal distribution, with statistic $\hat{\beta}_i$ and $\sigma$ as the std. error. A really high `t value` corresponds with a really low `Pr(>|t|)` value, and indicates that the coefficient is different than $0$.
+   * The stars indicate various levels of p-value. Special attention is given to $p<0.05$, though the p-value is [heavily disputed](https://amstat.tandfonline.com/doi/full/10.1080/00031305.2016.1154108#.XSx3YugzaUk) in our era of really big samples.
+   
+### Treatment of categorial variables
+
+Note the special treatment of categorial variables (i.e., `Continent`).
+
+*** 
+
+**How many continents in the regression versus the levels in the data? why?**
+
+***
+
+### The residual standard error
+
+The residual standard error, at the buttom of the table, reports an estimate for the $\epsilon$'s (error) standard deviation. While degrees of freedom signifies the sample size minus the number of coefficients, i.e.: $df=n-p-1$.
+
+### Multiple $R^2$ and Adjusted $R^2$
+
+These measure the fitness of the model. The $R^2$ is the proportion of our model to a nominal naive model (a simple average). The Adjusted $R^2$ uses a similar approach but "fines" the use of many features.
+
+### The F-Statistic (and hypothesis testing)
+
+The F-statistic is the ratio of:
+
+\[
+F = \frac{(TSS-RSS)/p}{RSS/(n-p-1)}
+\]
+
+It has its own "F distribution" when normality and homoschedastity of the model are assumed. 
+
+Is can be used for the significance test which examines the hypothesis:
+\[
+H_0:\beta_0=\beta_1=\beta_2=\ldots=\beta_p=0\\
+\]
+Versus the alternative (at least one $\beta_i$ is non-zero)
+
+Really high values of $F$ correspond to really low p-values, validating in a sense an overall relationship between the response and predictors.
+
+
+# Transformations
+
+We can use various transformations on-the-fly, when the variables are entered into the regression model.
+
+***
+
+**What transformation would you try on the gdp per capita variable to improve the model?**
+
+```{r}
+head(alchohol, 15) %>% 
+  select(country:Continent_Name) %>% 
+  knitr::kable()
+```
+
+***
+
+### Relative importance with `relaimpo`
+
+Each time we add a new variable to a model, our $R^2$ increases by a certain amount. However, the contribution of a new variable changes according to variables already in the model. For example:
+
+```{r rsquare demonstration}
+
+# just spirit
+summary(lm(beer_servings ~ spirit_servings, alchohol))$r.squared
+
+# just wine
+summary(lm(beer_servings ~ wine_servings, alchohol))$r.squared
+
+# spirit and wine
+summary(lm(beer_servings ~ spirit_servings + wine_servings, alchohol))$r.squared
+
+# adding continent
+summary(lm(beer_servings ~ spirit_servings + Continent_Name, alchohol))$r.squared
+summary(lm(beer_servings ~ wine_servings + Continent_Name, alchohol))$r.squared
+summary(lm(beer_servings ~ spirit_servings + wine_servings + Continent_Name, alchohol))$r.squared
+```
+
+In this case: 
+
+   * The contribution of wine added 0.23 to the $R^2$ (compared to a nominal model with just spirit)
+   * The contribution of spirit added 0.13 to the $R^2$ (compared to a nominal model with just wine)
+   * The contribution of continent ranges in 0.08-0.207, depending on when you add it.
+   
+The `relaimpo` package provides an analysis on all combinations (of the average $R^2$ increase).
+Note the use of `factor` to transform `Continent_Name` (otherwise the function fails).
+   
+```{r relaimpo example}
+#install.packages(relaimpo)
+
+relaimpo::calc.relimp(lm(beer_servings ~ spirit_servings + wine_servings + log(gdp2010) + factor(Continent_Name), alchohol))
+
+```
+
+Surprisingly, the continent is found to have the largest "lmg" (short for Lindeman, Merenda and Gold which wrote the original paper), which is the $R^2$ contribution averaged over orderings among regressors.
+
+### Feature selection
+
+There are a number of "greedy" feature selection algorithms, known as stepwise: forwards, backwards, forward-backward.
+Each algorithm starts from an initial model, define it as the "incumbent model". 
+
+At each iteration, the algorithm runs all `lm` combinations of adding (or removing or adding/removing) a single feature to the incumbent model.
+
+The algorithm selects the best model out of the examined models, using a criteria (e.g., AIC), and updates the "incumbent model".
+
+The algorithm stops when the incumbent model cannot be improved.
+
+In R, the function `MASS:stepAIC` can be used for stepwise. It utilizes the AIC (Akaike information criterion):
+
+\[
+AIC = -2\ln(\hat{L}) + 2k
+\]
+
+Where $\hat{L}$ is the likelihood and is defined as:
+
+\[
+\hat{L}(\theta) = f(y_1|\theta)\times\ldots\times f(y_n|\theta)=\Pi_{t=1}^nf(y_t|\theta)
+\]
+
+In the case of linear regression, the AIC is equivalent to $2k+n\ln(RSS)$.
+
+We illustrate the use of `stepAIC`.
+
+```{r stepwise}
+
+beer_step_bth <- MASS::stepAIC(beer_lm, direction = "both")
+beer_step_bck <- MASS::stepAIC(beer_lm, direction = "backward")
+
+base_mod <- lm(beer_servings ~ 1, data = alchohol)
+base_update <- update(base_mod, . ~ . -spirit_servings -wine_servings -gdp2010 -Continent_Name)
+beer_step_fwd <- MASS::stepAIC(base_update,
+                               scope = list(upper = ~ spirit_servings + wine_servings + gdp2010 + Continent_Name, 
+                                            lower ~ 1),
+  direction = "forward")
+
+```
+
+In this case, all three algorithms converge into the same model, with all variables except the gdp2010.
+
+```{r stepwise res}
+summary(beer_step_bth)
+```
+
+### How accurate is our prediction?
+
+The prediction can be provided using a prediction interval. The difference between a confidence interval and a prediction interval is that a confidence interval is constant and uniform for all $x$. A prediction interval is like a confidence interval but for a $x_0$, i.e., $f(x_0)\in[lb,ub]$.
+
+For example, here is the prediction interval of beer consumption for each of our observations.
+Note that this is a "dumb" prediction, which does not consider variable range (i.e., there are negative values for consumption).
+
+```{r prediction interval}
+alchohol %>% 
+  bind_cols(as_tibble(predict(beer_lm, 
+                              interval = "prediction",
+                              level = 0.95))) %>% 
+  select(country, beer_servings, fit, lwr, upr)
+```
+
+It is nice to illustrate in a model with just two variables:
+
+```{r prediction interval illustration}
+ggplot(alchohol, aes(y = beer_servings, x = log(gdp2010))) + 
+  geom_point() + 
+  stat_smooth(method = "lm", se = TRUE, level = 0.95)
+```
+
+Note the following clarification: the prediction interval is a confidence interval to what would your prediction be when you recreate the experiment, and not the interval in which 95% of the points will fall into.
+
+### Interactions between variables
+
+Sometimes we want to examine the interactions between a number of variables, e.g., the influence of continent*gdp on the target variable beer consumption. In which case we add in the formula an interaction indicator, i.e.: `log(gdp2010):Continent_Name`.
+
+```{r interactions}
+
+lm_beer_interaction <- 
+  lm(beer_servings ~ spirit_servings + wine_servings + log(gdp2010) + Continent_Name + log(gdp2010):Continent_Name,
+     data = alchohol)
+
+summary(lm_beer_interaction)
+
+```
+
+***
+
+**In terms of the regression formula, a `log(gdp2010)*Contenent_NameAsia` has been added and is significant, but what is its influence (its meaning) on the target variable? can you explain what it does in terms of a new observation and the value it would predict to it?**
+
+***

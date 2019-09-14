@@ -1,0 +1,254 @@
+---
+title: "Classification methods"
+author: "Adi Sarid / adi@sarid-ins.co.il"
+date: "July 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressMessages(library(tidyverse))
+```
+
+## The `glm` function
+
+Logistic regression is produced by using `glm` (though other functions such as `glmnet` can also be used). The g in `glm` stands for General (linear models), so in fact we can produce a lot of different models, depending on requirements (that should be determined by the assumed distribution of $Y$).
+
+### Families
+
+Even though we are going to focus on logistic regression, I should mention that using the argument `family` of the function we can produce:
+
+   * Linear regression (`family=gaussian`)
+   * Logistic regression (`family=binomial`)
+
+And also additional families which are not in our scope:
+
+   * Poisson regression using `family=poisson`, aka "log-linear" ($\log(E(Y|x)) = \beta^tx$), poisson is used to model "count" data.
+   * Gamma, quasi, quasibinomial, quasipoisson, inverse.gaussian, see `help(family)`.
+  
+### Link functions  
+ 
+Another argument (of each of the individual families) is the `link` function (that's why the are called a family). For example, in logistic regression we are assuming that `link="logit"` (and that's the default).
+
+Alternatively, we can also use `"probit"` which correspond to $\Phi^{-1}(p)=\beta^tx$ and `cauchit` which corresponds to the Cauchy inverse CDF used. Each of these are in turn plugged-in the log-likelihood function for optimization and extraction of $\beta$. For further reading, see [this discussion](https://stats.stackexchange.com/questions/68596/model-fitting-when-errors-take-a-cauchy-distribution).
+
+Now we're almost ready for some coding, but before that, meet the data set which we will use...
+
+## The scraped IMDb dataset
+
+For some diversity, we are leaving the beer example which served us loyally in the previous session, in favour of another fun activity, watching movies.
+
+We're going to use data which was scraped from the [IMDb website](https://www.imdb.com/), by sundeepblue, [source here](https://github.com/sundeepblue/movie_rating_prediction).
+
+Our goal is to predict a movie's financial success, i.e., movies which earned at least 2.5 times their investment (`gross`/`budget`$\geq2.5$) are considered successful for the sake of our classification.
+
+```{r read the movie db data and arrange}
+movies_raw <- read_csv("https://raw.githubusercontent.com/sarid-ins/statistical_learning_course/master/datasets/scraped_imdb/movie_db_clean.csv", col_types = cols())
+ 
+movies <- movies_raw %>% 
+  mutate(earn_ratio = gross/budget) %>% 
+  mutate(success = earn_ratio >= 2.5) %>% 
+  add_count(country, name = "country_count") %>% 
+  add_count(language, name = "language_count") %>% 
+  select(movie_title, title_year,
+         duration, aspect_ratio, country_count, language_count,
+         director_facebook_likes,
+         actor_1_facebook_likes, actor_2_facebook_likes, actor_3_facebook_likes,
+         Action:Western,
+         gross, budget, earn_ratio, success) %>% 
+  filter(!is.na(title_year))
+
+names(movies)
+
+```
+
+## A logistic regression model
+
+Note how the code for generating the model is almost the same as the one we've used for linear regression. We are using the budget feature, even though we know that it is directly related to the `earn_ration` and to the formula we used to define success.
+
+```{r logistic regression example}
+
+glm_logistic <- glm(success ~ .,
+                    data = movies %>% 
+                      select(-movie_title, -gross, -earn_ratio),
+                    family = binomial(link = "logit"))
+
+summary(glm_logistic)
+
+# alternative method for logistic regression (+ option to add regulatization)
+# movies_for_glmnet <- movies %>% 
+#   select(-movie_title, -gross, -earn_ratio) %>% 
+#   na.omit()
+# 
+# movies_logistic <- glmnet::glmnet(x = movies_for_glmnet %>% select(-success) %>% as.matrix,
+#                                   y = movies_for_glmnet %>% select(success) %>% as.matrix,
+#                                   family = "binomial")
+
+```
+
+***
+
+**Why do we have NAs on `Game-Show`, `News`, `Reality-TV`, and `Short`?**
+
+***
+
+### Interpretation of `glm`'s summary table, in the logistic regression case
+
+The summary table looks similar to the linear regression summary table, but it has some fundemantal differences:
+
+   * The interpretation of the estimate $\beta$ is different. It is the *odds ratio* increase when $x_i$ increases (Odds ratio$=\frac{p}{1-p}$).
+   * Std. Error is computed entirely differently (more information can be obtained in [this discussion](https://www.researchgate.net/post/How_to_compute_the_standard_errors_of_binary_logistic_regressions_coefficients) and references therein).
+   * Instead of *Residuals*, we have *Deviance Residuals* ($D=-2\log(l)$). The deviance is $\geq0$ (a perfect model achieves deviance $0$).
+   * The null deviance is the naive model (in which $\beta_0=\bar{y}$).
+   * We get the AIC value ($-2\log(l)+2k$), instead of $R^2$.
+   * Deviance residuals are $-2\log(l(x_i))$ (of the individual elements which comprise the log-likelihood).
+
+### Extracting predictions
+
+We can extract the predictions using the function `predict` (a wrapper, so use `?predict.glm` for help).
+
+The `predict` function can provide a few types of results controlled by the `type` argument
+
+   * `type="link"` provides the log-odds (the linear combination in the exponent).
+   * `type="response"` provides the predicted probability ($Pr(Y=1|X=x)$).
+
+
+
+```{r using predict}
+
+movies_model <- movies %>% 
+  filter(!is.na(success)) %>% 
+  mutate(predicted = predict(glm_logistic, type = "response", newdata = .)) %>% 
+  filter(!is.na(predicted))
+
+compute_confusion <- function(tbl, real_pr, predicted_pr, threshold, show_prop = F){
+  abs_tbl <- tbl %>% 
+    mutate(predicted_class = {{predicted_pr}} >= threshold) %>% 
+    count({{real_pr}}, predicted_class) %>% 
+    select({{real_pr}}, predicted_class, n)
+  
+  if (show_prop) {
+    res_confuse <- abs_tbl %>% 
+      group_by({{real_pr}}) %>% 
+      mutate(prop = n/sum(n)) %>% 
+      select(-n) %>% 
+      spread({{real_pr}}, prop) %>% 
+      rename(`predicted|true->` = predicted_class)
+  } else {
+    res_confuse <- abs_tbl %>% 
+      spread({{real_pr}}, n) %>% 
+      rename(`predicted|actual->` = predicted_class)
+  }
+  
+  return(res_confuse)
+  
+}
+
+compute_confusion(movies_model, success, predicted, 0.5)
+compute_confusion(movies_model, success, predicted, 0.5, T)
+```
+
+### Confusion matrix
+
+The confusion matrix is defined as follows:
+
+```
+|Predicted|True value->|FALSE|TRUE|
+|     FALSE            | TN  | FN |
+|     TRUE             | FP  | TP |
+```
+
+Where
+
+   * FP = False Positive = Type-I error
+   * FN = False Negative = Type-II error
+
+Or in other words:
+![error types](Type_IandType_II_errors.jpg)
+Source: [http://www.statisticssolutions.com/to-err-is-human-what-are-type-i-and-ii-errors/](http://www.statisticssolutions.com/to-err-is-human-what-are-type-i-and-ii-errors/)
+
+
+Note that there is some confusion in the confusion (matrix). For example:
+ISL uses rows for predicted and columns for true values (see page 145, Table 4.4), while ESL-II uses rows for true values and columns for predicted (see page 301, Table 9.1). This is confusing so always state your columns/rows clearly.
+
+
+***
+
+**Let's go to mentimeter for some "confusing fun":**
+
+   * What's going to happen when we decrease the threshold from 0.5 to 0.3?
+
+[quiz link](https://www.mentimeter.com/s/0d917d2f1935d9ff12e5bd01166035b3/cb459eff8ab9/edit?)
+
+```
+compute_confusion(movies_model, success, predicted, 0.3, T)
+```
+
+***
+
+### Model evaluation using ROC and AUC
+
+**(or: why I trust strep-A DIY detection kits)**
+
+ROC, short for Receiver Operating Characteristic, is a plot which helps us compare classification models. It was develpoed in the second world war when the American army tried to compare methods for recognizing Japanese planes. 
+
+ROC shows the rate of detecting an event (sensitivity, detecting a success), versus the specificity (misclassifying a movie as a success).
+
+In our confusion matrix terminology, that's a True Positive rate on the y-axis versus False Positive rate on the x-axis.
+
+Let's examine the following code and figure out together why it works:
+
+```{r plotting roc}
+roc_chart <- movies_model %>% 
+  select(success, predicted) %>% 
+  arrange(desc(predicted)) %>% 
+  mutate(TPR=cumsum(success)/sum(success),
+         FPR=cumsum(!success)/sum(!success))
+
+ggplot(roc_chart, aes(x = FPR, y = TPR)) + 
+  geom_line() + 
+  ylab("TPR (sensitivity)") + 
+  xlab("FPR (1-specificity)") + 
+  theme_bw()
+```
+
+Each point in this line is actually derived by a specific threshold (i.e., has a confusion matrix of its own).
+
+***
+
+**What does the ROC of $y=x$ stand for?**
+**What happens when the ROC is completely under the $y=x$ line?**
+
+***
+
+The **AUC** or area under the curve is the area contained under the ROC. It is an evaluation method for the fit of a model (which does not require a selection of a specific threshold).
+
+I.e., we're computing
+
+```{r auc demonstration}
+ggplot(roc_chart %>% 
+         bind_rows(tibble(FPR = 1, TPR = 0)), 
+       aes(x = FPR, y = TPR)) + 
+  ylab("TPR (sensitivity)") + 
+  xlab("FPR (1-specificity)") + 
+  geom_polygon(fill = "lightblue") +
+  theme_bw()
+
+# an estimation for the integral (AUC) can be obtained by using:
+AUC <- roc_chart %>% 
+  mutate(ydx = (FPR - lag(FPR))*TPR) %>% 
+  slice(-1) %>% 
+  pull(ydx) %>% 
+  sum()
+
+AUC
+
+```
+
+### Additional related methods we can adopt
+
+We can adopt a lot of the things we previously learned such as:
+
+   * Step-wise selection `MASS::stepAIC`.
+   * PCA before fitting the regression `prcomp`.
+   * Regularization, i.e., $\max\{\log(l)-\lambda\sum_{j=1}^p\left|\beta_j\right|\}$ via `glmnet` package.
