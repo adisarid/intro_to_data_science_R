@@ -26,20 +26,20 @@ A variables can be defined using the arrow notation (which we have already seen 
 ```{r setting new variables}
 a <- 1
 b <- 2
-c = 3 # just to show that this works
+d = 3 # just to show that this works
 
 a
 b
-c
+d
 a*b
-b*c
+b*d
 
 ```
 
 Try to run the following code in the console. What is the problem with it, can you fix the code?
 
 ```
-d <- c(a + b)
+e <- d*(a + b)
 ```
 
 Do not mix the assignment operator `=` (which I told you not to use), with the test equality operator `==`.
@@ -51,6 +51,10 @@ b == a
 b > a
 
 ```
+
+In the previous exercise we used variable names `a`, `b`, `d`, `e`. We skipped `c`. Why is that? Type `?c` in the console and see the documentation.
+
+## Logicals
 
 Also note the use of logicals:
 Please explain what each of the following operators do: `& | ! !=`, you can use the following (and modify it in any way):
