@@ -33,7 +33,11 @@ google_play_raw <- read_csv(file = "https://raw.githubusercontent.com/adisarid/i
 **Question 1:** Did you notice I used the `supressMessages(...)` function. What does it do? Why did I use it?
 
 **Question 2:** Did you notice any "parsing failures" when reading the file? 
-Try to figure out what do they mean, and think about how would you solve the problem. The error message contains a row location so you can look at the data in the area of the error to try and figure it out, e.g.: 
+Try to figure out what do they mean, and think about how would you solve the problem. 
+
+Don't dig too deep into the matter! (this exercise is about visualizations not data import), just read the output of the `read_csv` function (which indicates the parsing failures), and think of a quick way to avoid the problem.
+
+The error message contains a row location so you can look at the data in the area of the error to try and figure it out, e.g.: 
 
 ```
 location <- ???
@@ -43,7 +47,7 @@ google_play_raw[(location-3):(location+3),]
 Once you figure out what's wrong, filter this line out of the file (but note that there are other ways to handle this).
 
 ```
-google_play_raw <- google_play_raw[-location,]
+google_play <- google_play_raw[-location,]
 ```
 
 **Question 3**: Is there any other way you could have filtered this messy line? (think about `filter()`, the `is.na()` and `!` operator)
@@ -74,6 +78,8 @@ ggplot(???, aes(x = `Android Ver`)) +
 ```
 
 **Question 6:** 
+
+Reading the plot you generated, answer:
 
    1. What was the latest android version when the file was generated?
    2. Would you say that some categories of `Android Ver` should be grouped together?
@@ -129,7 +135,9 @@ rating_reviews_grouped_chart <-
    
 ```
 google_play <- google_play %>%
-   mutate(size_app_numeric = as.numeric(str_replace(XXX, "M", ""))
+   mutate(size_app_numeric = str_replace(XXX, "k", "")) %>% 
+   mutate(size_app_numeric = str_replace(XXX, "M", "000")) %>% 
+   mutate(XXX = as.numeric(XXX))
    
 ggplot(XXX, aes(XXX)) + 
    geom_histogram(fill = "lightblue", bins = XXX) + 
@@ -302,39 +310,6 @@ glimpse(telco_churn)
    a. Stick your green sticky note. 
    b. You can take a break and/or continue with the exercises. 
    c. When I see enough green sticky notes around we will solve the last exercise together.
-
-# Exercise 4: Chart branding - themes and scales
-
-In this short exercise you will have to control "themes" and "scales" to generate a Riskified branded charts. We will also add a logo to the charts.
-
-**Chart 1:** We start by a chart we have already seen (miles per galon as afunction of displacement, with gear and horse power).
-
-First, for the logo you must install the `rsvg` packages (`install.packages("rsvg")`). Then, you only need to replace the "???" in the proper places. Note that the final command is `grid.raster` from package `grid` (which you may also need to install). This puts the logo into the chart.
-
-```
-#install.packages("rsvg")
-riskified_logo <- rsvg::rsvg("https://3syq88kbbdj40jbkf2ssy21e-wpengine.netdna-ssl.com/wp-content/themes/riskified/images/logo.svg")
-
-ggplot(mtcars, aes(x = disp, y = mpg)) + 
-   geom_point(aes(size = hp, color = factor(gear))) + 
-   scale_???_???(values = c(???, ???, ???)) +
-   ggtitle("???") + 
-   labs(caption = "???") + 
-   theme_??()
-
-grid::grid.raster(riskified_logo, x = 0.07, y = 0.03, just = c("left", "bottom"), width = unit(0.7, 'inches'))
-```
-
-**Chart 2:** Now, we will do the same but to a different chart.
-
-```
-ggplot(telco_churn, aes(x = InternetService, fill=Churn)) + 
-   geom_bar(position = "stack", color = ???) + 
-   scale_???_???(???) + 
-   ggtitle("Comparing Telco's churn over internet service type") +
-   theme_??()
-```
-
 
 # Further study
 
