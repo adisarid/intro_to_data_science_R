@@ -463,23 +463,23 @@ In this short exercise you will have to control "themes" and "scales" to generat
 
 ```{r read riskified logo}
 #install.packages("rsvg")
-riskified_logo <- rsvg::rsvg("https://3syq88kbbdj40jbkf2ssy21e-wpengine.netdna-ssl.com/wp-content/themes/riskified/images/logo.svg")
+img_logo <- rsvg::rsvg("???")
 
 ggplot(mtcars, aes(x = disp, y = mpg)) + 
    geom_point(aes(size = hp, color = factor(gear))) + 
    scale_color_manual(values = c("#3dcea7", "#2b997b", "#09684e")) +
    ggtitle("Miles per galon") + 
-   labs(caption = "eCommerce Revenue Protection @ https://www.riskified.com/") + 
+   labs(caption = "Branded caption") + 
    theme_bw()
 
-grid::grid.raster(riskified_logo, x = 0.07, y = 0.03, just = c("left", "bottom"), width = unit(0.7, 'inches'))
+grid::grid.raster(img_logo, x = 0.07, y = 0.03, just = c("left", "bottom"), width = unit(0.7, 'inches'))
 ```
 
 ```{r second chart}
 ggplot(telco_churn, aes(x = InternetService, fill=Churn)) + 
    geom_bar(position = "stack", color = "black") + 
    scale_fill_manual(values = c("#3dcea7", "#09684e")) +
-   labs(caption = "eCommerce Revenue Protection @ https://www.riskified.com/") + 
+   labs(caption = "Branded caption...") + 
    ggtitle("Comparing Telco's churn over internet service type") +
    theme_bw()
 
