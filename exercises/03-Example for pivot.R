@@ -10,20 +10,17 @@ wide_dataset <- tribble(
 )
 
 wide_dataset %>% 
-  gather(key = "day", value = "frauds_detected")
-
-
-
+  pivot_longer(cols = day1, names_to = "day", values_to = "sales")
 
 # Part two of the mini-exercise
 
-long_dataset <- expand.grid(merchant = c("fizzbizz", "wizzmizzy", "lollipoppy"),
+long_dataset <- crossing(merchant = c("fizzbizz", "wizzmizzy", "lollipoppy"),
                             day = paste0("day", 1:5)) %>% 
   mutate(frauds_detected = floor(runif(n = 15, min = 1, max = 10)))
 
 # modify this using spread to bring it back to a wide form
 long_dataset %>% 
-  spread(???, ???)
+  pivot_wider(???)
 
 
 # What would be the proper form to use as a basis of a ggplot2 graph? Why?

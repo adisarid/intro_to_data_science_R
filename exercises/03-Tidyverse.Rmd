@@ -67,14 +67,14 @@ kaggle_work_method %>%
 # this code is for the last part (3):
 kaggle_work_method <- kaggle_work_method %>% 
    mutate_at(vars(???), 
-             funs(???))
+             ~{???})
 ```
 
 
-**Question 3:** In this part, we will prepare our dataset for analysis. We will utilize some of `tidyverse`'s important capabilities such as gathering and joining.
+**Question 3:** In this part, we will prepare our dataset for analysis. We will utilize some of `tidyverse`'s important capabilities such as pivoting and joining.
 
    1. First, using `select` drop all variables except the work variables and the `respondent_id` variable. Can you guess why I asked you to do that? what would've happened if you wouldn't have dropped the non-essential variables?
-   2. Use `gather` on the work variables, leaving the `respondent_id` as key.
+   2. Use `pivot_longer` on the work variables, leaving the `respondent_id` as key.
    3. Conduct a grouping by `respondent_id` and using summarize compute for each respondent:
       a. The total number of methods he/she uses.
       b. The total number of methods he/she uses most of the time.
@@ -85,7 +85,7 @@ kaggle_work_method <- kaggle_work_method %>%
 ```
 work_methods_num <- kaggle_work_method %>% 
    select(starts_with("???"), ???) %>% 
-   gather("???", "???", -???) %>% 
+   pivot_longer("???", "???", -???) %>% 
    group_by(respondent_id) %>% 
    summarize(tot_methods = ???,
              methods_most_time = sum(??? %in% ???),
@@ -135,8 +135,8 @@ How would you use this vector to select the required variables? hint: you can ei
 ```
 only_work_zero_one <- work_methods_num %>% 
    select(starts_with("WorkMethods")) %>% 
-   mutate_all(funs(???)) %>% 
-   rename_all(funs(str_replace(., ???, ""))) %>% 
+   mutate_all(~{???}) %>% 
+   rename_all(~str_replace(., ???, ""))) %>% 
    select(???)
 ```
 
