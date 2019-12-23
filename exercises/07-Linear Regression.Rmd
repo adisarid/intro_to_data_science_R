@@ -137,3 +137,11 @@ ggplot(iris_setosa_outlier, aes(x = Sepal.Length, y = Sepal.Width)) +
   ggtitle("The influence of a single outlier on the regression model\nChart is zoomed-in, i.e., the outlier (5.1, 35) is not visible in the chart")
 
 ```
+
+***
+
+Exercise:
+
+Use the `ChickWeight` data set to create a linear regression model which predicts the weight, with up to 10 variables.
+
+Examine the model's $R^2$ and compare with your collegues. Examine the model's residuals in a residual plot and a qqplot.
