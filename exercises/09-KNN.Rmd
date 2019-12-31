@@ -188,7 +188,7 @@ appointments <- appointments_raw %>%
   mutate(schedule_time = lubridate::hour(ScheduledDay)) %>%
   mutate(same_day_appointment = (abs(ScheduledDay - AppointmentDay) <= 24)*1) %>%
   mutate(is_male = (Gender == "M")*1) %>%
-  mutate_at(.vars = vars("schedule_time", "Age"), funs((. - min(.))/(max(.)-min(.)))) %>%
+  mutate_at(.vars = vars("schedule_time", "Age"), ~{((. - min(.))/(max(.)-min(.)))}) %>%
   select(XXX)
 
 create_knn_estimation <- function(vars_to_omit = "null", try_k = 1){
